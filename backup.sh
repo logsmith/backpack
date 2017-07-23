@@ -1,15 +1,15 @@
 #!/bin/bash
 
 cd ${0%/*}
-cd ../
+cd ../../../
 
 # Example command
 WPDBNAME=`cat active-config.php | grep DB_NAME | cut -d \' -f 4`;
-BUCKET_NAME=`cat active-config.php | grep S3_BACKUP_BUCKET_NAME | cut -d \' -f 4`
-REGION=`cat active-config.php | grep S3_BACKUP_REGION | cut -d \' -f 4`
-ACCESS_KEY=`cat active-config.php | grep S3_BACKUP_ACCESS_KEY | cut -d \' -f 4`
-SECRET_KEY=`cat active-config.php | grep S3_BACKUP_SECRET_KEY | cut -d \' -f 4`
-SLACK_WEBHOOK_URL=`cat active-config.php | grep S3_BACKUP_SLACK_WEBHOOK_URL | cut -d \' -f 4`
+BUCKET_NAME=`cat active-config.php | grep BACKPACK_S3_BUCKET_NAME | cut -d \' -f 4`
+REGION=`cat active-config.php | grep BACKPACK_S3_REGION | cut -d \' -f 4`
+ACCESS_KEY=`cat active-config.php | grep BACKPACK_S3_ACCESS_KEY | cut -d \' -f 4`
+SECRET_KEY=`cat active-config.php | grep BACKPACK_S3_SECRET_KEY | cut -d \' -f 4`
+SLACK_WEBHOOK_URL=`cat active-config.php | grep BACKPACK_S3_SLACK_WEBHOOK_URL | cut -d \' -f 4`
 
 filename=$WPDBNAME'--'$(date  +"%Y-%m-%d--%H-%M");
 
@@ -27,7 +27,7 @@ wp db export wp-content/uploads/database-backup.sql --allow-root
 
 # need to capture /home/forge/www.atomicsmash.co.uk/current/scripts/backup.sh: line 30: s3cmd: command not found
 
-if [ "$REGION" != "" ]; then
+if [ "SLACK_WEBHOOK_URL" != "" ]; then
 
     s3cmd put wp-content/uploads/database-backup.sql s3://$BUCKET_NAME/sql-backups/$filename --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic
 

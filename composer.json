@@ -2,9 +2,7 @@
     "name": "logsmith/backpack",
     "description": "Log Smith - Backpack",
     "keywords": [
-        "wordpress",
-        "plugin",
-        "dev"
+        "backup",
     ],
     "homepage": "http://www.atomicsmash.co.uk/",
     "license": "",
