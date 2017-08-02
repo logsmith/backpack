@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Check to see if s3cmd is installed
+type s3cmd >/dev/null 2>&1 || { echo >&2 "I require s3cmd but it's not installed."; exit 1; }
+
+# cd to where THIS script is located
 cd ${0%/*}
 cd ../../../
 
@@ -14,12 +18,9 @@ SLACK_WEBHOOK_URL=`cat active-config.php | grep BACKPACK_S3_SLACK_WEBHOOK_URL | 
 filename=$WPDBNAME'--'$(date  +"%Y-%m-%d--%H-%M");
 
 # Back up the WordPress database with WP-CLI
-wp db export wp-content/uploads/database-backup.sql --allow-root
-# cat $BACKUPPATH/$WPDBNAME/$DATEFORM-$WPDBNAME.sql | gzip > $BACKUPPATH/$WPDBNAME/$DATEFORM-$WPDBNAME.sql.gz
-
+wp db export ../backups/auto-database-backup.sql --allow-root
 
 # exit 1;
-
 
 # exmaple of if and
 # if [[ -n "$var" && -e "$var" ]] ; then
@@ -29,24 +30,23 @@ wp db export wp-content/uploads/database-backup.sql --allow-root
 
 if [ "SLACK_WEBHOOK_URL" != "" ]; then
 
-    s3cmd put wp-content/uploads/database-backup.sql s3://$BUCKET_NAME/sql-backups/$filename --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic
+    s3cmd put ../backups/auto-database-backup.sql s3://$BUCKET_NAME/sql-backups/$filename --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic
 
-    rm wp-content/uploads/database-backup.sql;
+    # rm wp-content/uploads/database-backup.sql;
     echo "SQL upload complete"
 
-
-    s3cmd sync wp-content/uploads/* s3://$BUCKET_NAME --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic
+    s3cmd sync ../backups/* s3://$BUCKET_NAME --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic
     # s3cmd sync ../wp-content/uploads s3://$BUCKET_NAME --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic -q
 
     echo "Sync complete"
 
     # ping slack
+    # ASTODO: Check to see if slack creds are available
     webhook_url=$SLACK_WEBHOOK_URL
     text="$WPDBNAME backed up!"
     channel="#backups"
     escapedText=$(echo $text | sed 's/"/\"/g' | sed "s/'/\'/g" )
     json="{\"channel\": \"$channel\", \"username\":\"backups\", \"text\": \"$escapedText\"}"
     curl -s -d "payload=$json" "$webhook_url"
-
 
 fi
