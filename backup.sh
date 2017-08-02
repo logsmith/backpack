@@ -15,7 +15,7 @@ ACCESS_KEY=`cat active-config.php | grep S3_BACKUP_ACCESS_KEY | cut -d \' -f 4`
 SECRET_KEY=`cat active-config.php | grep S3_BACKUP_SECRET_KEY | cut -d \' -f 4`
 SLACK_WEBHOOK_URL=`cat active-config.php | grep S3_BACKUP_SLACK_WEBHOOK_URL | cut -d \' -f 4`
 
-filename=$WPDBNAME'--'$(date  +"%Y-%m-%d--%H-%M");
+filename=$WPDBNAME'--'$(date  +"%Y-%m-%d--%H-%M")'.sql';
 
 if [ ! -d "wp-content/backups" ]; then
 	mkdir wp-content/backups
@@ -40,7 +40,7 @@ if [ "SLACK_WEBHOOK_URL" != "" ]; then
     # rm wp-content/uploads/database-backup.sql;
     echo "SQL upload complete"
 
-    s3cmd sync ../wp-content/uploads s3://$BUCKET_NAME --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic -q
+    s3cmd sync wp-content/uploads s3://$BUCKET_NAME --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic -q
 
     echo "Sync complete"
 
