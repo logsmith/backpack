@@ -3,6 +3,11 @@
 # Check to see if s3cmd is installed
 type s3cmd >/dev/null 2>&1 || { echo >&2 "I require s3cmd but it's not installed."; exit 1; }
 
+if [ ! -d "test" ]; then
+	mkdir wp-content/backups
+fi
+
+
 # cd to where THIS script is located
 cd ${0%/*}
 cd ../../../
@@ -17,8 +22,13 @@ SLACK_WEBHOOK_URL=`cat active-config.php | grep BACKPACK_S3_SLACK_WEBHOOK_URL | 
 
 filename=$WPDBNAME'--'$(date  +"%Y-%m-%d--%H-%M");
 
+if [ -d "wp-content/backups" ]; then
+	echo "Dir exists"
+fi
+
+
 # Back up the WordPress database with WP-CLI
-wp db export ../backups/auto-database-backup.sql --allow-root
+wp db export wp-content/backups/auto-database-backup.sql --allow-root
 
 # exit 1;
 
@@ -30,12 +40,12 @@ wp db export ../backups/auto-database-backup.sql --allow-root
 
 if [ "SLACK_WEBHOOK_URL" != "" ]; then
 
-    s3cmd put ../backups/auto-database-backup.sql s3://$BUCKET_NAME/sql-backups/$filename --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic
+    s3cmd put wp-content/backups/auto-database-backup.sql s3://$BUCKET_NAME/sql-backups/$filename --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic
 
     # rm wp-content/uploads/database-backup.sql;
     echo "SQL upload complete"
 
-    s3cmd sync ../backups/* s3://$BUCKET_NAME --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic
+    # s3cmd sync ../backups/* s3://$BUCKET_NAME --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic
     # s3cmd sync ../wp-content/uploads s3://$BUCKET_NAME --region=$REGION --secret_key=$SECRET_KEY --access_key=$ACCESS_KEY --no-mime-magic -q
 
     echo "Sync complete"
