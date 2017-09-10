@@ -74,9 +74,6 @@ if [ ! -d "wp-content/backups" ]; then
 fi
 
 
-# echo $filename;
-# exit
-
 # Back up the WordPress database with WP-CLI
 echo "${grn}Saving database backup${end} 💾"
 wp db export wp-content/backups/auto-database-backup.sql --allow-root
@@ -87,29 +84,19 @@ echo "${grn}Starting upload to S3${end} 📡"
 
 s3cmd put wp-content/backups/auto-database-backup.sql s3://$BACKPACK_BUCKET_NAME/sql-backups/$filename --region=$BACKPACK_BUCKET_REGION --secret_key=$BACKPACK_SECRET_KEY --access_key=$BACKPACK_ACCESS_KEY --no-mime-magic && echo "${grn}Database upload complete${end} 🎉" || echo "${red}Error uploading to S3, please check credentials${end} ⛔️";
 
-#
-# type s3cmd put wp-content/backups/auto-database-backup.sql s3://$BACKPACK_BUCKET_NAME/sql-backups/$filename --region=$BACKPACK_BUCKET_REGION --secret_key=$BACKPACK_SECRET_KEY --access_key=$BACKPACK_ACCESS_KEY --no-mime-magic >/dev/null 2>&1 || {
-# 	echo "${red}Error uploading to S3, please check credentials${end} ⛔️";
-# 	exit 1;
-# };
 
+# s3cmd put wp-content/backups/auto-database-backup.sql s3://$BACKPACK_BUCKET_NAME/sql-backups/$filename --region=$BACKPACK_BUCKET_REGION --secret_key=$BACKPACK_SECRET_KEY --access_key=$BACKPACK_ACCESS_KEY
 
+exit
 
-
-
-# rm wp-content/uploads/database-backup.sql;
-# echo "SQL upload complete"
+echo "${grn}Starting upload media to S3${end} 📡"
 
 s3cmd sync wp-content/uploads s3://$BACKPACK_BUCKET_NAME --region=$BACKPACK_BUCKET_REGION --secret_key=$BACKPACK_SECRET_KEY --access_key=$BACKPACK_ACCESS_KEY --no-mime-magic -q && echo "${grn}Media Library sync complete${end} 🎉" || echo "${red}Error uploading to S3, please check credentials${end} ⛔️";
 
-
-
 echo "${lightblu}--------------------------------------------------------------------------${end}";
 
-
-
 # Ping slack
-if [ -z $SLACK_WEBHOOK_URL ]; then
+if [ ! -z $SLACK_WEBHOOK_URL ]; then
 
 	echo "${lightblue}Pinging Slack${end} ✉️"
 
@@ -117,8 +104,8 @@ if [ -z $SLACK_WEBHOOK_URL ]; then
     text="$WPDBNAME backed up!"
     channel="#backups"
     escapedText=$(echo $text | sed 's/"/\"/g' | sed "s/'/\'/g" )
-    json="{\"channel\": \"$channel\", \"username\":\"backups\", \"text\": \"$escapedText\"}"
-    curl -s -d "payload=$json" "$webhook_url"
+    json="{\"channel\": \"$channel\", \"username\":\"backups\", \"text\": \"$escapedText\"}";
+    curl -s -d "payload=$json" "$webhook_url";
 
 	echo "${lightblu}--------------------------------------------------------------------------${end}";
 
