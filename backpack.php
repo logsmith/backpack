@@ -8,7 +8,7 @@ Author: David Darke
 Author URI: http://www.atomicsmash.co.uk
 */
 
-require('vendor/autoload.php');
+// require('vendor/autoload.php');
 
 if (!defined('ABSPATH'))exit; //Exit if accessed directly
 
@@ -27,7 +27,8 @@ class Backpack {
 
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			WP_CLI::add_command( 'backpack select-bucket', array($this ,'cli_backpack_select_bucket') );
-			WP_CLI::add_command( 'backpack sync-media', array($this ,'cli_backpack_transfer') );
+			WP_CLI::add_command( 'backpack backup', array($this ,'cli_backpack_backup') );
+			// WP_CLI::add_command( 'backpack restore', array($this ,'cli_backpack_transfer') );
         };
 
     }
@@ -49,9 +50,6 @@ class Backpack {
         if( $this->check_config_details_exist() == false ){
 			return WP_CLI::error( "Config details missing" );
 		}
-
-
-
 
 		// Check to see if there user is trying to set a specific bucket
 		if( isset( $args[0] )){
@@ -116,7 +114,13 @@ class Backpack {
 
 	}
 
-	function cli_backpack_transfer() {
+
+    function cli_backpack_backup() {
+        $this->backpack_backup_database();
+        $this->backpack_backup_media();
+    }
+
+	function backpack_backup_media() {
 
 		$selected_s3_bucket = get_option('backpack_s3_selected_bucket');
 		$wp_upload_dir = wp_upload_dir();
@@ -313,6 +317,18 @@ class Backpack {
 
 	}
 
+    function backpack_backup_database(){
+
+        if (!file_exists("wp-content/uploads/backups/")) {
+            mkdir("wp-content/uploads/backups/" ,0755);
+            echo "The directory 'wp-content/uploads/backups/' was successfully created.\n";
+        };
+
+        $output = shell_exec('wp db export wp-content/uploads/backups/latest-backup.sql --allow-root');
+        $output = shell_exec('wp db export wp-content/uploads/backups/'. date('Y-m-d--h-i-s').'-backup.sql --allow-root');
+        echo $output;
+
+    }
 
 }
 
