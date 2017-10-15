@@ -23,5 +23,8 @@
             "homepage": "https://www.atomicsmash.co.uk/"
         }
     ],
-    "type": "script"
+    "type": "wordpress-plugin",
+    "require": {
+        "aws/aws-sdk-php"							: "3.24.2"
+    }
 }
